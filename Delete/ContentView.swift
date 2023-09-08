@@ -11,6 +11,9 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
+    @State var presentSheet = false
+     
+    
 
     var body: some View {
         NavigationSplitView {
@@ -29,7 +32,10 @@ struct ContentView: View {
                     EditButton()
                 }
                 ToolbarItem {
-                    Button(action: addItem) {
+                    Button{ 
+                        presentSheet = true
+                    }
+                label: {
                         Label("Add Item", systemImage: "plus")
                     }
                 }
@@ -37,6 +43,11 @@ struct ContentView: View {
         } detail: {
             Text("Select an item")
         }
+        .sheet(isPresented: $presentSheet, content: {
+           @Bindable var item = Item(timestamp: Date())
+            AddItemView(newItem: item)
+        })
+        
     }
 
     private func addItem() {
@@ -52,6 +63,21 @@ struct ContentView: View {
                 modelContext.delete(items[index])
             }
         }
+    }
+    
+    private func fetchSomeItems() -> [Item]{
+        let predicate = #Predicate<Item> { item in
+            item.hasChanges
+        }
+        
+        let descriptor = FetchDescriptor(predicate: predicate)
+        do {
+            return try modelContext.fetch(descriptor)
+        } catch {
+            print("unable to fetch")
+            return [Item]()
+        }
+        
     }
 }
 
